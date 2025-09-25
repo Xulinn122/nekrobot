@@ -1,0 +1,362 @@
+const TelegramBot = require('node-telegram-bot-api');
+const axios = require('axios');
+const { Configuration, OpenAIApi } = require('openai');
+const fs = require('fs');
+const ytdl = require('ytdl-core');
+const path = require('path');
+// === SEUS TOKENS ===
+const telegramToken = '7951658490:AAEgYFBm7q3-e5Ah_zyaNi4RJIE1lG45DKY';
+const openWeatherKey = 'https://cep.awesomeapi.com.br/:format/:cep';
+//const openaiKey = 'SUA_CHAVE_OPENAI';
+
+// === BOT CONFIG ===
+
+const bot = new TelegramBot(telegramToken, { polling: true });
+//const openai = new OpenAIApi(new Configuration({ apiKey: openaiKey }));
+
+// === COMANDO /START ===
+bot.onText(/\/start/, (msg) => {
+  bot.sendMessage(msg.chat.id, `👋 Olá ${msg.from.first_name}!\nDigite /menu para ver opções ou /help para ajuda.`);
+});
+
+// === COMANDO /HELP ===
+bot.onText(/\/help/, (msg) => {
+  bot.sendMessage(msg.chat.id, `
+🛠️ *Comandos Disponíveis*:
+/start - Iniciar o bot
+/help - Ver ajuda
+/menu - Menu com botões
+/teclado - Ativar teclado
+/play - link do Youtube
+/dolar - Cotação do dólar
+/ia [pergunta] - Fale com a IA
+  `, { parse_mode: "Markdown" });
+});
+
+// === MENU INLINE ===
+/*bot.onText(/\/menu/, (msg) => {
+   const opts = {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📄 Info', callback_data: 'info' }, { text: '💬 Ajuda', callback_data: 'ajuda' }],
+        [{ text: '🌦️ Clima', callback_data: 'clima' }, { text: '💵 Dólar', callback_data: 'dolar' }],
+        [{ text: '🌐 Site', url: 'https://seusite.com' }]
+>]
+    }
+  };
+  bot.sendMessage(msg.chat.id, 'Menu:', opts);
+  const imageUrl = 'https://storage.oberonhosting.com.br/media/b330e93c154d3df9.jpg';
+  bot.sendPhoto(chatId, imageUrl, options);
+});
+*/
+/*bot.onText(/\/menu/, (msg) => {
+  const chatId = msg.chat.id;
+  const imgData = JSON.parse(fs.readFileSync('img.link.json', 'utf8'));
+  const imageUrl = imgData.menu;
+
+  // Botões do menu
+  const opts = {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📄 Info', callback_data: 'info' }, { text: '💬 Ajuda', callback_data: 'ajuda' }],
+        [{ text: '🎵play', callback_data: 'play' }, { text: '💵 Dólar', callback_data: 'dolar' }],
+        [{ text: '🌐 Site', url: 'https://seusite.com' }]
+      ]
+    }
+  };
+
+  // Envia a imagem com os botões
+  bot.sendPhoto(chatId, imageUrl, {
+    caption: 'Menu:',
+    reply_markup: opts.reply_markup
+  });
+});
+
+*/
+
+bot.onText(/\/menu/, (msg) => {
+  const chatId = msg.chat.id;
+  const fs = require('fs');
+  const imgData = JSON.parse(fs.readFileSync('img.link.json', 'utf8'));
+  const imageUrl = imgData.menu;
+
+  const legendaMenu = `
+───ׂ─ִ─ꆬ🌙ꆬ─ִ──ׂ──
+*『𝐏𝐀𝐈𝐍𝐄𝐋 𝐑𝐀𝐏𝐈𝐃❍̸』*
+───ׂ─ִ─ꆬ🌙ꆬ─ִ──ׂ──
+├◨ׄ✿ּ  #Play2 (nome)
+├◨ׄ✿ּ  #Tiktok (link)
+├◨ׄ✿ּ  #Tiktoksrch (nome)
+───ׂ─ִ─ꆬ🌙ꆬ─ִ──ׂ──
+*『𝐏𝐀𝐈𝐍𝐄𝐋 𝐑𝐀𝐏𝐈𝐃❍̸』*
+───ׂ─ִ─ꆬ🌙ꆬ─ִ──ׂ──`;
+
+  const opts = {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '📄 Info', callback_data: 'info' },
+          { text: '💬 Ajuda', callback_data: 'ajuda' }
+        ],
+        [
+          { text: '🎵 Play2', callback_data: 'play2' },
+          { text: '📱 TikTok', callback_data: 'tiktok' }
+        ],
+        [
+          { text: '🔍 TikTok Search', callback_data: 'tiktoksrch' }
+        ],
+        [
+          { text: '💵 Dólar', callback_data: 'dolar' }
+        ],
+        [
+          { text: '🌐 Site', url: 'https://seusite.com' }
+        ]
+      ]
+    }
+  };
+
+  bot.sendPhoto(chatId, imageUrl, {
+    caption: legendaMenu,
+    parse_mode: 'Markdown',
+    reply_markup: opts.reply_markup
+  });
+});
+
+
+bot.on('callback_query', (query) => {
+  const { data, message, from } = query;
+  if (data === 'info') {
+    bot.sendMessage(message.chat.id, `👤 Seu nome: ${from.first_name}\n🆔 ID: ${from.id}`);
+  } else if (data === 'ajuda') {
+    bot.sendMessage(message.chat.id, 'Digite /help para ver a lista de comandos.');
+  } else if (data === 'play2') {
+    bot.sendMessage(message.chat.id, 'Digite: /play2 nome da música');
+  } else if (data === 'dolar') {
+    bot.sendMessage(message.chat.id, 'Digite: /dolar');
+  }
+  bot.answerCallbackQuery(query.id);
+});
+
+// === TECLADO REPLY ===
+bot.onText(/\/teclado/, (msg) => {
+  bot.sendMessage(msg.chat.id, 'Teclado ativado:', {
+    reply_markup: {
+      keyboard: [['📄 Info', '💬 Ajuda'], ['🔙 Voltar']],
+      resize_keyboard: true,
+      one_time_keyboard: false
+    }
+  });
+});
+
+bot.on('message', (msg) => {
+  const text = msg.text;
+  const chatId = msg.chat.id;
+
+  if (text === '📄 Info') {
+    bot.sendMessage(chatId, `👤 Nome: ${msg.from.first_name}`);
+  } else if (text === '💬 Ajuda') {
+    bot.sendMessage(chatId, 'Use o comando /help para ver todos os comandos.');
+  } else if (text === '🔙 Voltar') {
+    bot.sendMessage(chatId, 'Voltando...');
+  }
+});
+
+//=== COMANDO /TIKTOKSRCH===
+bot.onText(/\/tiktoksrch (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const query = match[1];
+
+  if (!query) {
+    return bot.sendMessage(chatId, "❌ Coloque um título para a pesquisa.");
+  }
+
+  bot.sendChatAction(chatId, 'upload_video');
+
+  try {
+    const res = await axios.get('https://nodz-apis.com.br/api/pesquisas/tiktok', {
+      params: {
+        query,
+        apiKey: '3e39fa09b0'
+      }
+    });
+
+    if (!res.data || !res.data.resultado || !res.data.resultado.videos) {
+      return bot.sendMessage(chatId, "❌ Não encontrei nenhum resultado para essa pesquisa.");
+    }
+
+    const i = res.data.resultado;
+    const nulo = 'Sem Informações';
+
+    const desc = `
+💕𖧷 *Pesquisa:* ${query || nulo}
+📂𖧷 *Tipo:* ${i.type || nulo}
+✨𖧷 *Tags:* ${i.titulo || nulo}
+    `.trim();
+
+    // Enviar vídeo
+    await bot.sendVideo(chatId, i.videos, {
+      caption: desc,
+      parse_mode: 'Markdown'
+    });
+
+    // Enviar áudio separado
+    await bot.sendAudio(chatId, i.audio, {
+      title: i.titulo || 'Sem título',
+      performer: i.type || 'Desconhecido'
+    });
+
+  } catch (err) {
+    console.error(err);
+    bot.sendMessage(chatId, "❌ Não consegui realizar o download da pesquisa.");
+  }
+});
+//=== COMANDO /TIKTOK===
+bot.onText(/\/tiktok (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const url = match[1];
+
+  if (!url.includes("vm.tiktok.com") && !url.includes("tiktok.com")) {
+    return bot.sendMessage(chatId, "❌ Você deve enviar um link válido do TikTok.");
+  }
+
+  bot.sendChatAction(chatId, 'upload_video');
+
+  try {
+    const res = await axios.get('https://nodz-apis.com.br/api/downloads/tiktok/dl', {
+      params: {
+        url,
+        apiKey: '3e39fa09b0'
+      }
+    });
+
+    if (!res.data || !res.data.resultado || !res.data.resultado.play) {
+      return bot.sendMessage(chatId, "❌ Não obtive nenhum resultado para esse vídeo.");
+    }
+
+    const i = res.data.resultado;
+    const nulo = 'Sem Informações';
+
+    const desc = `
+🎵 *Vídeo do TikTok*
+▶️ *Reproduções:* ${i.play_count || nulo}
+💬 *Comentários:* ${i.comment_count || nulo}
+💕 *Compartilhamentos:* ${i.share_count || nulo}
+📂 *Downloads:* ${i.download_count || nulo}
+👑 *Autor:* ${i.author?.nickname || nulo}
+✨ *Descrição:* ${i.title || nulo}
+    `.trim();
+
+    await bot.sendVideo(chatId, i.play, {
+      caption: desc,
+      parse_mode: 'Markdown'
+    });
+
+  } catch (err) {
+    console.error(err);
+    bot.sendMessage(chatId, "❌ Erro ao baixar o vídeo. Tente novamente mais tarde.");
+  }
+});
+// === COMANDO /MÚSICA===
+bot.onText(/^\/play2 (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const query = match[1];
+
+  if (!query) {
+    return bot.sendMessage(chatId, '🎵 Envie o nome da música após o comando, exemplo: /play2 Nirvana');
+  }
+
+  await bot.sendChatAction(chatId, 'typing');
+
+  try {
+    const res = await axios.get('https://nodz-apis.com.br/api/downloads/playaudio', {
+      params: {
+        query,
+        apiKey: '3e39fa09b0'
+      }
+    });
+
+    const resultado = res.data.resultado;
+
+    if (!resultado || !resultado.audio) {
+      return bot.sendMessage(chatId, '❌ Não encontrei resultados para essa pesquisa.');
+    }
+
+    const titulo = resultado.titulo || 'Sem título';
+    const descricao = resultado.descricao || '';
+    const imagem = resultado.imagem;
+    const filename = resultado.filename || 'audio.mp3';
+
+    // Envia a thumb com título e descrição
+    await bot.sendPhoto(chatId, imagem, {
+      caption: `🎵 *${titulo}*\n_${descricao}_`,
+      parse_mode: 'Markdown'
+    });
+
+    // Envia o áudio
+    await bot.sendAudio(chatId, resultado.audio, {
+      caption: `🎧 Tocando agora: ${titulo}`,
+      title: titulo,
+      performer: descricao,
+      filename: filename,
+      thumb: imagem
+    });
+
+  } catch (err) {
+    console.error(err);
+    bot.sendMessage(chatId, '❌ Erro ao buscar ou enviar a música.');
+  }
+});
+// === COMANDO /DOLAR ===
+bot.onText(/\/dolar/, async (msg) => {
+  const chatId = msg.chat.id;
+
+  try {
+    const res = await axios.get('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+    const usd = res.data.USDBRL;
+
+    bot.sendMessage(chatId, `
+💵 *Cotação do Dólar*
+🔹 Valor atual: R$ ${parseFloat(usd.bid).toFixed(2)}
+📈 Alta: R$ ${parseFloat(usd.high).toFixed(2)}
+📉 Baixa: R$ ${parseFloat(usd.low).toFixed(2)}
+    `, { parse_mode: "Markdown" });
+  } catch (err) {
+    bot.sendMessage(chatId, '❌ Erro ao buscar cotação.');
+  }
+});
+
+// === COMANDO /IA ===
+bot.onText(/^\/(pin|pinterest)(?: (.+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const q = match[2];
+
+  if (!q) {
+    return bot.sendMessage(chatId, 'Digite o nome da imagem. Ex: /pin gato');
+  }
+
+  try {
+    const res = await axios.get(`https://api.duckduckgo.com/`, {
+      params: {
+        q: q,
+        format: 'json',
+        no_redirect: 1,
+        no_html: 1
+      }
+    });
+
+    // Simples: pegar a primeira imagem da resposta
+    const imagem = res.data?.Image;
+    if (!imagem) {
+      return bot.sendMessage(chatId, '❌ Não encontrei nenhuma imagem nessa busca.');
+    }
+
+    await bot.sendPhoto(chatId, imagem, {
+      caption: `🔍 Imagem para: ${q}`
+    });
+
+  } catch (e) {
+    console.error(e);
+    bot.sendMessage(chatId, 'Erro ao buscar imagem.');
+  }
+});
