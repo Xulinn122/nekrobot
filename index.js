@@ -517,10 +517,6 @@ bot.onText(/^\/logs(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const domain = match && match[1] ? match[1].trim() : null;
 
-if (!verificarAcesso(userId)) {
-    return bot.sendMessage(msg.chat.id, '⛔ Você não tem acesso liberado. Use `~seuCodigo` para ativar.');
-  }
-
   if (!domain) return bot.sendMessage(chatId, "Use: /logs <dominio>\nEx.: /logs netflix.com");
 
   await bot.sendMessage(chatId, `🔎 Buscando logs para: *${domain}* ...`, { parse_mode: "Markdown" });
@@ -618,9 +614,6 @@ bot.on("callback_query", async (callbackQuery) => {
 bot.onText(/^\/cnh1(?:\s+(\d+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const cnh = match && match[1] ? match[1].trim() : null;
-   if (!verificarAcesso(userId)) {
-    return bot.sendMessage(msg.chat.id, '⛔ Você não tem acesso liberado. Use `~seuCodigo` para ativar.');
-  }
 
   if (!cnh) {
     return bot.sendMessage(
@@ -669,10 +662,6 @@ CEP: ${data.enderecoCep || "N/A"}
 bot.onText(/^\/cpf1(?:\s+(\d+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const cpf = match && match[1] ? match[1].trim() : null;
-
- if (!verificarAcesso(userId)) {
-    return bot.sendMessage(msg.chat.id, '⛔ Você não tem acesso liberado. Use `~seuCodigo` para ativar.');
-  }
 
   if (!cpf) {
     return bot.sendMessage(
@@ -743,10 +732,6 @@ ${telefones}
 bot.onText(/^\/fotosp (.+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const cpf = match && match[1] ? match[1].trim() : null;
-
- if (!verificarAcesso(userId)) {
-    return bot.sendMessage(msg.chat.id, '⛔ Você não tem acesso liberado. Use `~seuCodigo` para ativar.');
-  }
 
   if (!cpf) {
     return bot.sendMessage(
